@@ -29,7 +29,10 @@ function start_websockets(callback) {
         // onopen
         let params = {
             action: 'subscribe',
-            topic: 'confirmation'
+            topic: 'confirmation',
+            options: {
+                confirmation_type: "active_quorum",
+            }
         }
         socket.send(JSON.stringify(params));
     }, function (response) {
