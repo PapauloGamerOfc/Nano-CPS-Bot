@@ -77,34 +77,49 @@ function update_cps() {
 }
 
 let last_cps = -1
+let last_activity = null
 let last_status = null
+let last_change = null
 
 async function show_cps() {
-    let cur_cps = cps_tracker.slice(cps_tracker.length / 2).reduce(function (a, b) { return a + b; }, 0) / (cps_tracker.length / 2);
-    let past_cps = cps_tracker.slice(0, cps_tracker.length / 2).reduce(function (a, b) { return a + b; }, 0) / (cps_tracker.length / 2);
-    let guilds = client.guilds.cache
-    if(cur_cps.toFixed(2) != last_cps.toFixed(2)) {
-        last_cps = cur_cps
-        guilds.forEach(guild => {
-            try {
-                guild.me.setNickname('Nano CPS = ' + cur_cps.toFixed(2))
-            } catch(e) {
-            }
-        })
-    }
-    let status
-    if(cur_cps == past_cps) {
-        status = '+0.00%'
-    } else if(past_cps == 0) {
-        status = '+∞%'
-    } else if(cur_cps > past_cps) {
-        status = '+' + ((cur_cps - past_cps) / past_cps * 100).toFixed(2) + '%'
-    } else if(cur_cps < past_cps) {
-        status = '-' + ((1 - cur_cps / past_cps) * 100).toFixed(2) + '%'
-    }
-    if(status != last_status) {
-        last_status = status
-        client.user.setActivity(status, {'type': 'WATCHING'})
+    let now = Date.now()
+    if(last_change == null || (now - last_change) >= 10000) {
+        last_change = now
+        let cur_cps = cps_tracker.slice(cps_tracker.length / 2).reduce(function (a, b) { return a + b; }, 0) / (cps_tracker.length / 2);
+        let past_cps = cps_tracker.slice(0, cps_tracker.length / 2).reduce(function (a, b) { return a + b; }, 0) / (cps_tracker.length / 2);
+        let guilds = client.guilds.cache
+        if(cur_cps.toFixed(2) != last_cps.toFixed(2)) {
+            last_cps = cur_cps
+            guilds.forEach(guild => {
+                try {
+                    guild.me.setNickname('Nano CPS = ' + cur_cps.toFixed(2))
+                } catch(e) {
+                }
+            })
+        }
+        let activity
+        let status
+        if(cur_cps == past_cps) {
+            activity = '+0.00%'
+            status = 'idle'
+        } else if(past_cps == 0) {
+            activity = '+∞%'
+            status = 'online'
+        } else if(cur_cps > past_cps) {
+            activity = '+' + ((cur_cps - past_cps) / past_cps * 100).toFixed(2) + '%'
+            status = 'online'
+        } else if(cur_cps < past_cps) {
+            activity = '-' + ((1 - cur_cps / past_cps) * 100).toFixed(2) + '%'
+            status = 'dnd'
+        }
+        if(activity != last_activity) {
+            last_activity = activity
+            client.user.setActivity(activity, {'type': 'WATCHING'})
+        }
+        if(status != last_status) {
+            last_status = status
+            client.user.setStatus(status)
+        }
     }
 }
 
